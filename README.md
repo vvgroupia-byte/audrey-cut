@@ -75,11 +75,36 @@ de fala, loudness, cor e posicao das legendas.
 
 Tudo corre localmente. O video dela nunca sai do computador.
 
+## Testes
+
+```bash
+.venv/bin/python tests/test_motor.py
+```
+
+40 testes sobre a parte onde os erros sao silenciosos: a conversao de tempos
+depois de o squad reordenar os clipes, a validacao do EDL, a deteccao de
+candidatos a corte, e os nomes dos parametros que vao para o CapCut.
+
+O `install.sh` corre-os no fim e recusa dar-se por concluido se falharem. O CI do
+GitHub corre-os a cada push, e falha tambem se aparecer um traco longo em
+qualquer ficheiro.
+
 ## Limitacoes, ditas de frente
 
+Ha uma auditoria completa em [AUDITORIA.md](AUDITORIA.md), com o que estava errado
+e foi corrigido, e com o que continua por provar.
+
+- **A montagem no CapCut nunca foi executada de verdade.** Toda a cadeia ate ao
+  corte foi corrida com video real, mas as chamadas para o CapCut foram
+  calculadas e nunca enviadas, porque a maquina onde isto foi feito nao tem o app
+  instalado. O primeiro teste real vai ser na maquina dela.
 - **O CapCut nao tem API oficial.** O servidor que escreve o projeto e da
   comunidade. Quando a CapCut mudar o formato do ficheiro, pode partir. Nesse
   caso o corte continua a existir em `clipes/` e o plano em `EDL.json`.
+- **Tres parametros do CapCut continuam por confirmar** contra o servidor real.
+  Saem marcados como `campos_incertos` no plano, para o agente ler o schema em vez
+  de adivinhar.
+- **So foi feito e testado em macOS.**
 - **A transcricao e lenta.** Varios minutos por video, e mais na primeira vez,
   porque descarrega um modelo de cerca de 3 GB.
 - **O squad propoe, ela decide.** O projeto chega montado ao CapCut, mas quem
