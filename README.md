@@ -7,9 +7,16 @@ Feito para o perfil **@audreydoanne**. O conteudo e sempre da marca dela.
 
 ## Para instalar
 
-Abre o Claude Code nesta pasta e escreve: **instala isso pra mim**.
+Abre o Claude Code e escreve isto, tal e qual:
 
-Se preferires a mao: `./install.sh` e depois le o `INSTALAR.md`.
+```
+clona https://github.com/vvgroupia-byte/audrey-cut e instala pra mim
+```
+
+Ele trata do resto. No fim diz o que ficou pronto e o que falta.
+
+Se ja tens a pasta no computador, basta abrir o Claude Code nela e escrever
+**instala isso pra mim**. A mao: `./install.sh`, e depois le o `INSTALAR.md`.
 
 ## Para usar
 

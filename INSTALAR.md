@@ -1,15 +1,21 @@
 # Audrey Cut, instalacao
 
-**Audrey: nao precisas de fazer nada aqui a nao ser abrir o Claude Code na pasta
-onde este ficheiro esta e escrever:**
+**Audrey: nao precisas de fazer nada aqui a nao ser abrir o Claude Code e
+escrever isto:**
 
 ```
-instala isso pra mim
+clona https://github.com/vvgroupia-byte/audrey-cut e instala pra mim
 ```
+
+Se ja tens a pasta no computador, abre o Claude Code nela e escreve so
+**instala isso pra mim**.
 
 O resto e com ele. Quando acabar, ele diz o que fazer a seguir.
 
 Se alguma coisa correr mal, manda print do erro ao Kaiky.
+
+> Nota: o repositorio e privado. Se der erro de acesso, e porque a tua conta do
+> GitHub ainda nao foi convidada. Pede ao Kaiky.
 
 ---
 
