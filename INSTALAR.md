@@ -47,50 +47,40 @@ escreve o `config.json`.
 Le o que ele imprime. Se avisar que falta o ffmpeg, o CapCut ou a pasta de
 projetos do CapCut, resolve isso antes de continuar (ver Passo 3).
 
-### Passo 2: instalar o MCP do CapCut
+### Passo 2: instalar o servidor do CapCut
 
-O CapCut nao tem API oficial. O que existe sao servidores da comunidade que
-escrevem o ficheiro de projeto diretamente na pasta do app. Usa este, que corre
-tudo localmente e nao faz chamadas para fora:
-
-```bash
-git clone https://github.com/Rajbagus/rabbitorial-capcut-mcp.git ~/.audrey-cut-mcp
-cd ~/.audrey-cut-mcp
-uv python install 3.11
-uv run --python 3.11 install.py
-```
-
-**Nao uses `python3 install.py`.** O Python do sistema no macOS costuma ser o 3.9,
-e este servidor exige 3.10 ou superior. Com `uv run` garante-se a versao certa sem
-mexer no Python do sistema.
-
-O `install.py` do projeto cria o ambiente dele, encontra a pasta de projetos do
-CapCut e regista-se sozinho no Claude Code. Confirma no fim com:
+O CapCut nao tem API oficial. O que existe e um servidor da comunidade
+(`fancyboi999/capcut-mcp`) que escreve o ficheiro de projeto do CapCut. O
+`install.sh` do passo 1 ja chama o instalador dele, mas se precisares de o correr
+ou reparar em separado:
 
 ```bash
-claude mcp list
+./mcp/instalar-servidor.sh
 ```
 
-Tem de aparecer uma linha do CapCut com estado ligado. Se nao aparecer, regista a
-mao seguindo o README desse repositorio.
+Esse script faz tudo: clona o servidor para `~/.audrey-cut/capcut-mcp`, cria o
+ambiente Python 3.12 isolado com a versao exata do SDK que funciona
+(`mcp==1.13.1`), escolhe uma porta livre (9077, com fallback ate 9099), instala
+um servico do sistema (launchd) para o servidor **ligar sozinho no login e reviver
+se cair**, e regista no Claude Code com:
 
-### Passo 2b: confirmar os nomes reais dos parametros
+```
+claude mcp add --transport sse --scope user capcut http://127.0.0.1:PORTA/mcp
+```
 
-Depois de o MCP estar ligado, **le o schema real das ferramentas** `add_video`,
-`add_text` e `add_video_keyframe` e compara com o que esta em
-`engine/capcut_build.py`, na seccao "Sobre os nomes dos parametros".
+O `--scope user` importa: sem ele o registo fica preso a pasta onde correu.
 
-Os nomes que la estao vieram da documentacao publica do VectCutAPI, que e o
-upstream, e nao de uma execucao real. Tres campos ficaram por confirmar e saem
-marcados como `campos_incertos` no plano gerado:
+Confirma no fim com `claude mcp list`: a linha do capcut tem de terminar em
+**Connected**. Se disser Failed, o servidor nao esta a correr ou a porta diverge;
+corre o `instalar-servidor.sh` outra vez, ele e idempotente.
 
-- o sistema de coordenadas de `transform_x` e `transform_y` (pixel ou -1 a 1)
-- se `add_video` e `add_text` aceitam `track_name`
-- a unidade de `font_size`
+Privacidade: o `config.json` do servidor fica com `is_upload_draft: false`. O
+material dela nunca sai do computador.
 
-Se algum nome divergir, corrige no `capcut_build.py` e corre `tests/test_motor.py`
-outra vez. Nao adivinhes: uma chamada com nome errado falha em silencio ou monta
-o texto no sitio errado.
+Nota tecnica: a montagem quente do `/editar` nem usa o MCP, usa a API REST do
+mesmo servidor via `engine/capcut_exec.py`, que e deterministico e testado. O
+registo MCP serve para conversar com o CapCut fora do fluxo (por exemplo,
+"acrescenta um texto ao draft X").
 
 **Diz claramente a utilizadora que este servidor e comunitario e nao oficial:**
 quando a CapCut atualizar o formato do projeto, ele pode deixar de funcionar. Se

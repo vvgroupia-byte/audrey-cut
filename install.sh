@@ -20,7 +20,7 @@ echo "  Edicao de video com squad, saida direta para o CapCut"
 echo -e "${OFF}"
 
 # ---------------------------------------------------------------- 1. sistema
-passo "1/7  A verificar o sistema"
+passo "1/8  A verificar o sistema"
 SO="$(uname -s)"
 if [ "$SO" != "Darwin" ]; then
   erro "Este instalador so foi feito e testado em Mac."
@@ -33,7 +33,7 @@ ok "macOS $(sw_vers -productVersion), $(uname -m)"
 mkdir -p "$BIN"
 
 # ---------------------------------------------------------------- 2. uv
-passo "2/7  Python isolado (uv)"
+passo "2/8  Python isolado (uv)"
 if command -v uv >/dev/null 2>&1; then
   ok "uv ja instalado ($(uv --version))"
 else
@@ -46,7 +46,7 @@ else
   fi
 fi
 
-passo "3/7  Ambiente Python 3.11"
+passo "3/8  Ambiente Python 3.11"
 uv python install 3.11 >/dev/null 2>&1
 if uv venv --python 3.11 "$RAIZ/.venv" >/dev/null 2>&1 || [ -d "$RAIZ/.venv" ]; then
   ok "ambiente criado em .venv"
@@ -63,7 +63,7 @@ else
 fi
 
 # ---------------------------------------------------------------- 4. ffmpeg
-passo "4/7  ffmpeg (corta e trata o video)"
+passo "4/8  ffmpeg (corta e trata o video)"
 if command -v ffmpeg >/dev/null 2>&1; then
   ok "ffmpeg ja instalado ($(ffmpeg -version 2>/dev/null | head -1 | cut -d' ' -f3))"
 elif command -v brew >/dev/null 2>&1; then
@@ -77,8 +77,18 @@ else
   FALHAS=1
 fi
 
-# ---------------------------------------------------------------- 5. squad
-passo "5/7  Squad de edicao"
+# ---------------------------------------------------------------- 5. servidor MCP
+passo "5/8  Servidor CapCut MCP (entrega automatica no CapCut)"
+if bash "$RAIZ/mcp/instalar-servidor.sh"; then
+  ok "servidor MCP instalado e a correr sozinho"
+else
+  erro "o servidor MCP nao ficou pronto. O corte funciona na mesma, mas o"
+  echo "  projeto nao entra sozinho no CapCut. Ve as mensagens acima."
+  FALHAS=1
+fi
+
+# ---------------------------------------------------------------- 6. squad
+passo "6/8  Squad de edicao"
 DESTINO="$HOME/.claude/commands/audrey-cut"
 mkdir -p "$DESTINO"
 if cp -R "$RAIZ/squad/." "$DESTINO/" 2>/dev/null; then
@@ -105,8 +115,8 @@ TRABALHO="$HOME/Desktop/Audrey Cut"
 mkdir -p "$TRABALHO/1-videos-brutos" "$TRABALHO/2-prontos"
 ok "pastas criadas na Secretaria: 'Audrey Cut'"
 
-# ---------------------------------------------------------------- 6. CapCut
-passo "6/7  Ligacao ao CapCut"
+# ---------------------------------------------------------------- 7. CapCut
+passo "7/8  Ligacao ao CapCut"
 if [ -d "/Applications/CapCut.app" ]; then
   ok "CapCut encontrado"
 else
@@ -124,7 +134,7 @@ else
   FALHAS=1
 fi
 
-passo "7/7  Auto-teste do motor"
+passo "8/8  Auto-teste do motor"
 if "$RAIZ/.venv/bin/python" "$RAIZ/tests/test_motor.py" >/dev/null 2>&1; then
   ok "os testes do motor passam"
 else

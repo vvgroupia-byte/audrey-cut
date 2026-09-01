@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "engine"))
 
-import capcut_build
+import capcut_exec
 import detect
 import edl as edl_mod
 import legendas
@@ -223,9 +223,17 @@ verificar(repetido["inicio"] == 0.0,
           f"marcou aos {repetido['inicio']}s")
 
 
-print("\nCapCut: nomes dos parametros\n")
+print("\nCapCut: chamadas para o servidor fancyboi999\n")
+
+# Os nomes e a semantica abaixo foram lidos do codigo do proprio servidor
+# (app/schemas/*.py e *_impl.py) e validados contra ele a correr.
 
 e = edl_exemplo()
+e["legendas"] = [
+    {"inicio": 0.0, "fim": 0.5, "texto": "o grande", "estilo": "base"},
+    {"inicio": 0.5, "fim": 1.0, "texto": "segredo", "estilo": "base"},
+]
+e["fixos"] = [{"inicio": 0, "fim": 999, "texto": "*resultado no final", "estilo": "loop_aberto"}]
 manifesto = {
     "clipes": [
         {"indice": 0, "ficheiro": "/tmp/c0.mp4", "duracao": 3.0, "inicio_no_bruto": 30.0, "motivo": "hook"},
@@ -233,61 +241,77 @@ manifesto = {
         {"indice": 2, "ficheiro": "/tmp/c2.mp4", "duracao": 2.0, "inicio_no_bruto": 50.0, "motivo": "fecho"},
     ]
 }
-plano = capcut_build.construir(e, manifesto)
-por_ferramenta = {}
-for c in plano["chamadas"]:
-    por_ferramenta.setdefault(c["ferramenta"], []).append(c)
+chamadas = capcut_exec.construir_chamadas(e, manifesto, "/tmp/drafts")
+por_endpoint = {}
+for c in chamadas:
+    por_endpoint.setdefault(c["endpoint"], []).append(c)
 
-verificar(plano["chamadas"][0]["ferramenta"] == "create_draft",
-          "o plano comeca por criar o rascunho")
-verificar(plano["chamadas"][-1]["ferramenta"] == "save_draft",
-          "o plano acaba por gravar o rascunho")
+verificar(chamadas[0]["endpoint"] == "/create_draft",
+          "a sequencia comeca por criar o rascunho")
+verificar(chamadas[-1]["endpoint"] == "/save_draft",
+          "a sequencia acaba por gravar o rascunho")
+verificar(chamadas[-1]["corpo"]["draft_folder"] == "/tmp/drafts",
+          "o save_draft entrega direto na pasta do CapCut, sem cp manual")
 
-video = por_ferramenta["add_video"][0]["argumentos"]
-verificar("end" in video and "duration" not in video,
-          "add_video usa 'end' e nao 'duration'", str(sorted(video)))
-verificar("video_url" in video, "add_video usa 'video_url'")
+video = por_endpoint["/add_video"][0]["corpo"]
+verificar(video["start"] == 0 and abs(video["end"] - 3.0) < 0.001,
+          "start/end recortam o ficheiro de origem (clipe ja cortado: inteiro)",
+          str(video))
+verificar("target_start" in video and "duration" in video,
+          "a posicao na timeline vai em target_start e a duracao em duration")
 
-texto = por_ferramenta["add_text"][0]["argumentos"]
-verificar("font_size" in texto and "font_color" in texto,
-          "add_text usa 'font_size' e 'font_color'", str(sorted(texto)))
-verificar("cor" not in texto and "tamanho_px" not in texto,
-          "add_text nao leva nomes inventados em portugues")
+alvos = [v["corpo"]["target_start"] for v in por_endpoint["/add_video"]]
+fins_alvo = [round(v["corpo"]["target_start"] + v["corpo"]["duration"], 3)
+             for v in por_endpoint["/add_video"]]
+verificar(alvos[0] == 0 and all(abs(f - i) < 0.001 for f, i in zip(fins_alvo, alvos[1:])),
+          "os clipes ficam encostados na timeline, sem buracos",
+          f"inicios {alvos} fins {fins_alvo}")
 
-kf = por_ferramenta["add_video_keyframe"][0]["argumentos"]
-verificar(isinstance(kf.get("property_types"), list)
-          and isinstance(kf.get("times"), list)
-          and isinstance(kf.get("values"), list),
-          "add_video_keyframe usa tres listas paralelas")
-verificar(len(kf["times"]) == len(kf["values"]),
-          "times e values tem o mesmo comprimento")
+verificar(len(por_endpoint.get("/add_subtitle", [])) == 1,
+          "a legenda base inteira vira UMA chamada add_subtitle com SRT")
+srt = por_endpoint["/add_subtitle"][0]["corpo"]["srt"]
+verificar("00:00:00,000 --> 00:00:00,500" in srt and "segredo" in srt,
+          "o SRT tem os tempos e os textos das legendas", srt[:80])
+
+kf = por_endpoint["/add_video_keyframe"][0]["corpo"]
+verificar(len(kf["property_types"]) == len(kf["times"]) == len(kf["values"]),
+          "keyframes em listas paralelas de igual comprimento")
 verificar(all(isinstance(v, str) for v in kf["values"]),
-          "os valores do keyframe vao em texto, como na documentacao")
+          "os valores do keyframe vao em texto")
+verificar(set(kf["property_types"]) == {"scale_x", "scale_y"},
+          "o zoom mexe em scale_x e scale_y")
 
-verificar(plano["chamadas_com_campos_incertos"] > 0,
-          "os campos nao documentados sao marcados como incertos em vez de adivinhados")
+enfase = por_endpoint["/add_text"][0]["corpo"]
+verificar(enfase["transform_y"] > 0,
+          "a enfase fica acima do centro (transform_y normalizado positivo)",
+          str(enfase["transform_y"]))
+verificar(-1 <= enfase["transform_y"] <= 1,
+          "transform_y esta na faixa normalizada do CapCut")
 
-soma = sum(c["duracao"] for c in manifesto["clipes"])
-verificar(abs(plano["duracao_final_s"] - soma) < 0.001,
-          "a duracao final bate com a soma dos clipes")
-
-videos = por_ferramenta["add_video"]
-fins = [v["argumentos"]["end"] for v in videos]
-inicios = [v["argumentos"]["start"] for v in videos]
-verificar(inicios[0] == 0 and all(abs(f - i) < 0.001 for f, i in zip(fins, inicios[1:])),
-          "os clipes ficam encostados, sem buracos nem sobreposicao",
-          f"inicios {inicios} fins {fins}")
+fixo = [c["corpo"] for c in por_endpoint["/add_text"] if c["corpo"]["text"].startswith("*")]
+verificar(fixo and abs(fixo[0]["end"] - 9.0) < 0.001,
+          "o texto fixo dura o video inteiro e nao os 999s do EDL",
+          str(fixo[0]["end"] if fixo else None))
 
 
 print("\nZoom: limite\n")
 
 e = edl_exemplo()
 e["clipes"][0]["zoom"] = 3.0  # exagero de proposito
-plano = capcut_build.construir(e, manifesto)
-kf = next(c for c in plano["chamadas"] if c["ferramenta"] == "add_video_keyframe")
-verificar(float(kf["argumentos"]["values"][-1]) <= capcut_build.ZOOM_MAX + 0.001,
+chamadas = capcut_exec.construir_chamadas(e, manifesto, "/tmp/drafts")
+kf = next(c for c in chamadas if c["endpoint"] == "/add_video_keyframe")
+verificar(float(kf["corpo"]["values"][-1]) <= capcut_exec.ZOOM_MAX + 0.001,
           "o zoom e limitado ao maximo, mesmo que o EDL peca mais",
-          f"deu {kf['argumentos']['values'][-1]}")
+          f"deu {kf['corpo']['values'][-1]}")
+
+
+print("\nSRT: formatacao de tempo\n")
+
+verificar(capcut_exec.segundos_para_srt(0.0) == "00:00:00,000", "zero formata certo")
+verificar(capcut_exec.segundos_para_srt(61.5) == "00:01:01,500", "61,5s formata certo",
+          capcut_exec.segundos_para_srt(61.5))
+verificar(capcut_exec.segundos_para_srt(3599.999) == "00:59:59,999", "fronteira da hora",
+          capcut_exec.segundos_para_srt(3599.999))
 
 
 print(f"\n{'=' * 50}")

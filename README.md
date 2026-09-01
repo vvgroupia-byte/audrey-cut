@@ -42,7 +42,7 @@ video bruto
    +-- EDL.json  (a lista de decisoes, e a fonte de verdade)
    |
    +-- [codigo]  ffmpeg corta e normaliza o audio
-   +-- [MCP]     monta a sequencia no CapCut
+   +-- [codigo]  executor chama o servidor local do CapCut e entrega o draft
 ```
 
 O `EDL.json` e a peca central de proposito. Ele desacopla o trabalho do squad do
@@ -75,7 +75,7 @@ de fala, loudness, cor e posicao das legendas.
 | `engine/legendas.py` | converte a fala para legenda no tempo do video montado |
 | `engine/render.py` | corta os clipes e normaliza para -14 LUFS |
 | `engine/previa.py` | junta os clipes num ficheiro so, para ver o ritmo |
-| `engine/capcut_build.py` | traduz o EDL em chamadas do MCP do CapCut |
+| `engine/capcut_exec.py` | executa o EDL contra o servidor local e entrega o draft na pasta do CapCut |
 | `engine/estilo.py` | gera o ESTILO-MEDIDO.md a partir das medicoes |
 | `engine/frames.py` | folha de contacto de um video, para inspecao visual |
 | `engine/verificar.py` | diz o que falta na maquina |
@@ -101,16 +101,16 @@ qualquer ficheiro.
 Ha uma auditoria completa em [AUDITORIA.md](AUDITORIA.md), com o que estava errado
 e foi corrigido, e com o que continua por provar.
 
-- **A montagem no CapCut nunca foi executada de verdade.** Toda a cadeia ate ao
-  corte foi corrida com video real, mas as chamadas para o CapCut foram
-  calculadas e nunca enviadas, porque a maquina onde isto foi feito nao tem o app
-  instalado. O primeiro teste real vai ser na maquina dela.
+- **A montagem foi executada de verdade contra o servidor local**: o draft e
+  gerado com os videos, as legendas, as enfases e os keyframes de zoom, e
+  entregue na pasta de drafts com os caminhos internos corretos (verificado por
+  inspecao do `draft_info.json`). O que falta e a confirmacao visual no app,
+  porque a maquina de desenvolvimento nao tem o CapCut instalado: o primeiro
+  "abrir e ver a timeline" vai ser na maquina dela.
 - **O CapCut nao tem API oficial.** O servidor que escreve o projeto e da
-  comunidade. Quando a CapCut mudar o formato do ficheiro, pode partir. Nesse
-  caso o corte continua a existir em `clipes/` e o plano em `EDL.json`.
-- **Tres parametros do CapCut continuam por confirmar** contra o servidor real.
-  Saem marcados como `campos_incertos` no plano, para o agente ler o schema em vez
-  de adivinhar.
+  comunidade (`fancyboi999/capcut-mcp`). Quando a CapCut mudar o formato do
+  ficheiro, pode partir. Nesse caso o corte continua a existir em `clipes/`, a
+  previa em `previa.mp4` e o plano em `EDL.json`.
 - **So foi feito e testado em macOS.**
 - **A transcricao e lenta.** Varios minutos por video, e mais na primeira vez,
   porque descarrega um modelo de cerca de 3 GB.

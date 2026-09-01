@@ -1,4 +1,70 @@
-# Auditoria, 01/set/2026
+# Auditoria
+
+## Segunda rodada, 01/set/2026 (tarde): a receita do funil e a prova real
+
+O Kaiky trouxe os 18 passos do tutorial que ensina a ligar o Claude ao CapCut,
+com prints. O tutorial usa um servidor diferente do que eu tinha escolhido, e o
+autor dele validou a ligacao de verdade. Engoli o orgulho e troquei.
+
+### O que a segunda engenharia reversa encontrou
+
+**1. O servidor escolhido na v1 nunca tinha sido testado por ninguem que eu
+pudesse verificar.** O do tutorial (`fancyboi999/capcut-mcp`) vinha com uma
+receita comprovada: SSE na porta 9077, `mcp==1.13.1` fixado, Python 3.12.
+Troquei, clonei, e li o codigo fonte dele inteiro em vez de confiar em README.
+
+**2. Os "campos incertos" da v1 morreram.** Com o codigo do servidor aberto
+(app/schemas/*.py), os tres pontos por confirmar ficaram confirmados:
+`transform_y` e normalizado (0 = centro, -0.8 = fundo), `track_name` existe em
+todas as ferramentas, e `font_size` esta na unidade propria do CapCut (legenda
+tipica = 5). O executor usa os valores certos e os testes verificam-nos.
+
+**3. O agente a despachar chamadas MCP era a arquitetura errada.** A sequencia
+de chamadas e 100% deterministica a partir do EDL. Virou codigo
+(`engine/capcut_exec.py`): fala com a API REST do mesmo servidor, executa em
+segundos, e e testavel. O MCP continua registado para conversas avulsas com o
+CapCut. O `capcut_build.py` da v1 foi removido: dois caminhos para o mesmo
+destino divergem sempre.
+
+**4. Duas descobertas no codigo do servidor que melhoraram o resultado:**
+- `add_subtitle` aceita o conteudo SRT inline: a legenda base inteira
+  (33 blocos no teste) vai numa UNICA chamada, em vez de 33 `add_text`.
+- `add_video` separa o recorte na origem (`start`/`end`) da posicao na
+  timeline (`target_start`), que e exatamente o que o EDL precisa.
+
+**5. O `draft_folder` do save_draft nao copia nada.** So reescreve os caminhos
+internos dos assets para onde o draft VAI estar. A copia fisica (o passo 6
+manual do tutorial) e responsabilidade nossa: o executor faz `copytree` da pasta
+do servidor para a pasta de drafts do CapCut e verifica que o `draft_info.json`
+chegou. O passo manual morreu.
+
+**6. O servidor exige ffprobe e esta maquina so tinha ffmpeg.** Ficou um shim
+(`~/.local/bin/ffprobe`, Python + PyAV) que responde ao subconjunto de flags que
+o servidor usa. Na maquina dela, o `brew install ffmpeg` traz o ffprobe real.
+
+**7. Zero-terminal a serio.** O tutorial manda deixar uma janela do Terminal
+aberta com o servidor. Um agente DevOps montou: launchd (liga no login, revive
+se cair), escolha de porta com fallback 9077 a 9099, registo MCP com
+`--scope user` (sem isso o registo fica preso a pasta onde correu, erro que eu
+proprio cometi ao testar), e um `desinstalar.sh`.
+
+### A prova que faltava
+
+Executado nesta maquina, contra o servidor real, com video real:
+
+```
+create_draft -> add_video x3 -> add_video_keyframe -> add_subtitle (SRT, 33
+blocos) -> add_text x2 -> save_draft -> copia para a pasta de drafts
+```
+
+O draft gerado foi inspecionado por dentro (`draft_info.json`): 3 videos na
+track video_main com os mp4 em assets/, 33 legendas na track subtitle, enfase e
+texto fixo, 4 keyframes de zoom, duracao 18.340s exata, e os caminhos internos a
+apontar para a pasta de destino. **So falta abrir no app**, que nao existe nesta
+maquina; o formato do ficheiro e o que o CapCut le, gerado pela mesma biblioteca
+(pyJianYingDraft) que o tutorial validou visualmente.
+
+## Primeira rodada, 01/set/2026 (manha)
 
 Revisao critica de tudo o que foi construido. Cada item diz o que estava errado,
 como se percebeu, e o que ficou feito.

@@ -102,17 +102,21 @@ e um resultado util.
 ## Passo 5: montar no CapCut
 
 ```bash
-.venv/bin/python engine/capcut_build.py "$PROJ/EDL.json" \
+.venv/bin/python engine/capcut_exec.py "$PROJ/EDL.json" \
   --manifesto "$PROJ/clipes/manifesto.json" --out "$PROJ/plano-capcut.json"
 ```
 
-Depois executa o plano: le `plano-capcut.json` e chama as ferramentas do MCP do
-CapCut pela ordem em que la estao. O `create_draft` devolve um id: substitui-o em
-todas as chamadas seguintes onde aparece `{draft_id}`.
+Um comando so. O executor fala com o servidor local (a porta esta em
+`~/.audrey-cut/porta.txt`), faz as chamadas pela ordem certa, espera a gravacao
+terminar e copia o draft para a pasta de projetos do CapCut. Nao ha nenhum passo
+manual depois disto: ela abre o CapCut e o projeto esta na lista.
 
-Se o MCP do CapCut nao estiver ligado, nao inventes: diz que o corte esta pronto
-em `$PROJ/clipes/` e que o plano de montagem esta no `EDL.json`, e explica que
-falta ligar o MCP.
+Se quiseres ver o que ele faria sem executar, acrescenta `--dry-run`.
+
+Se o executor falhar por o servidor nao responder, corre
+`mcp/instalar-servidor.sh` e tenta outra vez. Se continuar a falhar, nao
+inventes: diz que o corte esta pronto em `$PROJ/clipes/`, que a previa esta em
+`$PROJ/previa.mp4`, e que a montagem no CapCut ficou pendente do servidor.
 
 ## Passo 6: contar a ela o que foi feito
 

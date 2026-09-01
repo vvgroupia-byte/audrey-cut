@@ -7,9 +7,12 @@ Uso:
 Devolve codigo 0 se estiver tudo bem, 1 se faltar alguma coisa essencial.
 """
 import json
+import os
 import shutil
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -55,7 +58,8 @@ def verificar_ffmpeg():
 
 
 def verificar_motor():
-    for f in ("probe.py", "transcribe.py", "detect.py", "edl.py", "render.py", "capcut_build.py"):
+    for f in ("probe.py", "transcribe.py", "detect.py", "edl.py", "legendas.py",
+              "render.py", "previa.py", "capcut_exec.py"):
         resultado(f"motor: {f}", (RAIZ / "engine" / f).exists())
 
 
@@ -87,14 +91,63 @@ def verificar_capcut():
               essencial=False)
 
 
+def porta_do_servidor():
+    """Le a porta real gravada pelo instalador. Sem ficheiro, assume a 9077."""
+    ficheiro = Path.home() / ".audrey-cut" / "porta.txt"
+    try:
+        return int(ficheiro.read_text().strip())
+    except (OSError, ValueError):
+        return 9077
+
+
+def verificar_servidor_mcp():
+    porta = porta_do_servidor()
+    url = f"http://127.0.0.1:{porta}/docs"
+    try:
+        with urllib.request.urlopen(url, timeout=3) as r:
+            responde = r.status == 200
+    except (urllib.error.URLError, OSError):
+        responde = False
+    resultado("servidor MCP a responder", responde,
+              f"porta {porta}" if responde else f"nada em {url}, corre mcp/instalar-servidor.sh",
+              essencial=False)
+
+
+def verificar_launchd_mcp():
+    plist = Path.home() / "Library" / "LaunchAgents" / "com.audreycut.mcp.plist"
+    resultado("servico launchd (plist)", plist.exists(),
+              "" if plist.exists() else "corre mcp/instalar-servidor.sh",
+              essencial=False)
+    try:
+        r = subprocess.run(
+            ["launchctl", "print", f"gui/{os.getuid()}/com.audreycut.mcp"],
+            capture_output=True, text=True)
+        carregado = r.returncode == 0
+    except OSError:
+        carregado = False
+    resultado("servico launchd carregado", carregado,
+              "" if carregado else "o servidor nao arranca sozinho, corre mcp/instalar-servidor.sh",
+              essencial=False)
+
+
 def verificar_mcp():
-    r = subprocess.run(["claude", "mcp", "list"], capture_output=True, text=True)
+    porta = porta_do_servidor()
+    try:
+        r = subprocess.run(["claude", "mcp", "list"], capture_output=True, text=True)
+    except OSError:
+        resultado("MCP do CapCut", False, "nao consegui correr 'claude mcp list'", essencial=False)
+        return
     if r.returncode != 0:
         resultado("MCP do CapCut", False, "nao consegui correr 'claude mcp list'", essencial=False)
         return
-    ligado = "capcut" in r.stdout.lower()
+    ligado = False
+    for linha in r.stdout.splitlines():
+        if "capcut" in linha.lower() and "connected" in linha.lower():
+            ligado = True
+            break
     resultado("MCP do CapCut", ligado,
-              "sem isto o corte fica pronto mas nao entra sozinho no CapCut" if not ligado else "",
+              f"porta {porta}" if ligado else
+              "sem isto o corte fica pronto mas nao entra sozinho no CapCut",
               essencial=False)
 
 
@@ -112,6 +165,8 @@ def main():
     verificar_pastas()
     print("\n CapCut")
     verificar_capcut()
+    verificar_servidor_mcp()
+    verificar_launchd_mcp()
     verificar_mcp()
 
     print()

@@ -1,0 +1,382 @@
+<title>Audrey Cut</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;1,800&family=Archivo+Black&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Tema unico, assumido: o mundo escuro de um editor de video.
+     Tudo pintado explicitamente para segurar em qualquer host. */
+  :root {
+    --ground: #101014;
+    --surface: #1A1A21;
+    --surface-2: #22222B;
+    --line: #2E2E39;
+    --text: #F2F2F0;
+    --muted: #9A9AA6;
+    --accent: #F5E63D;
+    --accent-ink: #131309;
+    --ok: #4ADE80;
+    --warn: #FFB454;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --body: "Archivo", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --display: "Archivo Black", "Archivo", "Arial Black", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 16.5px;
+    line-height: 1.65;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation: none !important; transition: none !important; }
+  }
+
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 20px 96px; }
+
+  /* ---------- hero: a enfase de reel ---------- */
+  header { padding: 72px 0 40px; }
+  .clap {
+    font: 600 12px/1 var(--mono);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .clap b { color: var(--accent); font-weight: 600; }
+  h1 {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: clamp(46px, 11vw, 76px);
+    line-height: .92;
+    letter-spacing: -.01em;
+    text-transform: uppercase;
+    margin: 0 0 22px;
+    color: var(--accent);
+    text-shadow: 4px 4px 0 #000;
+    text-wrap: balance;
+    transform: rotate(-1.2deg);
+  }
+  .sub { max-width: 54ch; color: var(--text); margin: 0 0 8px; }
+  .sub b { color: var(--accent); font-weight: 600; }
+  .subtle { color: var(--muted); font-size: 14.5px; max-width: 58ch; }
+
+  /* timeline decorativa: os clipes de um corte */
+  .timeline {
+    display: flex; gap: 5px; margin-top: 34px;
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px;
+    background: var(--surface);
+  }
+  .timeline i {
+    height: 26px; border-radius: 3px; flex-grow: 1; display: block;
+    background: linear-gradient(180deg, #34343f, #26262e);
+    border: 1px solid #3a3a46;
+  }
+  .timeline i.cut { flex-grow: .35; background: linear-gradient(180deg, #6b652c, #4d4a20); border-color: var(--accent); }
+
+  /* ---------- stepper sticky ---------- */
+  nav.steps {
+    position: sticky; top: 0; z-index: 5;
+    background: color-mix(in srgb, var(--ground) 88%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 0;
+    margin: 0 -20px;
+  }
+  nav.steps ol {
+    display: flex; gap: 8px; justify-content: center;
+    list-style: none; margin: 0; padding: 0 20px;
+  }
+  nav.steps a {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--line);
+    color: var(--muted); text-decoration: none;
+    font: 600 12px/1 var(--mono);
+    background: var(--surface);
+    transition: transform .15s ease;
+  }
+  nav.steps a:hover, nav.steps a:focus-visible { transform: scale(1.12); outline: none; border-color: var(--muted); }
+  nav.steps a:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+  nav.steps a.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+
+  /* ---------- cards de passo ---------- */
+  section.step { margin-top: 56px; scroll-margin-top: 76px; }
+  .step-tag {
+    display: inline-flex; align-items: baseline; gap: 10px; margin-bottom: 14px;
+  }
+  .step-tag .n {
+    font-family: var(--display); font-style: italic; font-size: 30px;
+    color: var(--accent); text-shadow: 2px 2px 0 #000;
+  }
+  .step-tag h2 {
+    font-family: var(--body); font-weight: 800; font-style: italic;
+    font-size: 23px; letter-spacing: -.01em; margin: 0;
+    text-wrap: balance;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 22px 20px;
+  }
+  .card p { margin: 0 0 14px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul { margin: 0; padding-left: 20px; }
+  .card li { margin-bottom: 10px; }
+  .card li:last-child { margin-bottom: 0; }
+  .card li b, .card p b { color: var(--accent); font-weight: 600; }
+
+  /* bloco de comando com botao copiar */
+  .cmd {
+    position: relative;
+    background: #0B0B0E;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin: 16px 0 6px;
+    overflow: hidden;
+  }
+  .cmd pre {
+    margin: 0; padding: 16px 16px 14px;
+    font: 400 13.5px/1.6 var(--mono);
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .cmd .accent { color: var(--accent); }
+  .copy {
+    display: flex; width: 100%;
+    align-items: center; justify-content: center; gap: 8px;
+    border: 0; border-top: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--text);
+    font: 600 13px/1 var(--body);
+    letter-spacing: .04em;
+    padding: 12px;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .copy:hover { background: #2B2B36; }
+  .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .copy.done { background: var(--accent); color: var(--accent-ink); }
+
+  /* caixa "o que voce deve ver" */
+  .see {
+    border-left: 3px solid var(--ok);
+    background: color-mix(in srgb, var(--ok) 7%, var(--surface));
+    border-radius: 0 8px 8px 0;
+    padding: 13px 16px;
+    margin-top: 16px;
+    font-size: 15px;
+  }
+  .see b { color: var(--ok); font-weight: 600; }
+  .warnbox {
+    border-left: 3px solid var(--warn);
+    background: color-mix(in srgb, var(--warn) 7%, var(--surface));
+    border-radius: 0 8px 8px 0;
+    padding: 13px 16px;
+    margin-top: 16px;
+    font-size: 15px;
+  }
+  .warnbox b { color: var(--warn); font-weight: 600; }
+
+  /* lista de cuidados */
+  .care { display: grid; gap: 12px; }
+  .care article {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+  .care h3 { margin: 0 0 6px; font-size: 15px; font-weight: 800; font-style: italic; }
+  .care p { margin: 0; color: var(--muted); }
+  .care code, .card code {
+    font: 600 .88em var(--mono);
+    background: #0B0B0E;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  footer {
+    margin-top: 72px; padding-top: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 13.5px;
+  }
+  footer b { color: var(--text); font-weight: 600; }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="clap">REC <b>&#9679;</b> 00:00:00 &middot; 9:16 &middot; 1080&times;1920</p>
+  <h1>Audrey<br>Cut</h1>
+  <p class="sub">Você grava. Ele corta, legenda, dá zoom e monta o projeto <b>dentro do CapCut</b>. Você só revisa e posta.</p>
+  <p class="subtle">Instalação de uns 10 minutos, uma vez só. Depois disso, editar um vídeo é escrever uma palavra.</p>
+  <div class="timeline" aria-hidden="true">
+    <i></i><i class="cut"></i><i></i><i></i><i class="cut"></i><i></i><i class="cut"></i><i></i>
+  </div>
+</header>
+
+<nav class="steps" aria-label="Passos">
+  <ol>
+    <li><a href="#p1" class="on">1</a></li>
+    <li><a href="#p2">2</a></li>
+    <li><a href="#p3">3</a></li>
+    <li><a href="#p4">4</a></li>
+    <li><a href="#p5">5</a></li>
+    <li><a href="#p6">6</a></li>
+    <li><a href="#p7">7</a></li>
+    <li><a href="#p8">8</a></li>
+  </ol>
+</nav>
+
+<section class="step" id="p1">
+  <div class="step-tag"><span class="n">1</span><h2>O que é isso</h2></div>
+  <div class="card">
+    <p>O Audrey Cut é um time de edição que mora no seu computador. Ele assiste seu vídeo bruto, escolhe o gancho, corta as pausas e os erros, escreve as legendas sincronizadas e entrega o projeto <b>já montado no CapCut</b>, com o corte, os textos e os zooms na timeline.</p>
+    <p>O estilo dele não é inventado: foi medido em reels reais de referência, corte a corte. Tudo roda no seu computador. <b>Nenhum vídeo seu sai da sua máquina.</b></p>
+  </div>
+</section>
+
+<section class="step" id="p2">
+  <div class="step-tag"><span class="n">2</span><h2>O que você precisa ter</h2></div>
+  <div class="card">
+    <ul>
+      <li><b>CapCut</b> instalado no computador (Mac). Baixa em capcut.com, abre uma vez e cria um projeto qualquer, pode ser vazio. Isso cria a pasta onde os projetos moram.</li>
+      <li><b>Claude Code</b>, o aplicativo. É nele que você vai escrever os comandos.</li>
+      <li>Acesso ao repositório (o Kaiky te convida no GitHub, é um clique).</li>
+    </ul>
+  </div>
+</section>
+
+<section class="step" id="p3">
+  <div class="step-tag"><span class="n">3</span><h2>Instalar (é uma frase)</h2></div>
+  <div class="card">
+    <p>Abre o Claude Code, cola isto e dá enter. Ele baixa, instala e configura tudo sozinho, inclusive o servidor que conversa com o CapCut.</p>
+    <div class="cmd">
+      <pre>clona https://github.com/vvgroupia-byte/audrey-cut e instala pra mim</pre>
+      <button class="copy" type="button">Copiar</button>
+    </div>
+    <p class="subtle" style="margin-top:12px">Se ele pedir permissão pra rodar comandos durante a instalação, aceita: é ele instalando as peças.</p>
+  </div>
+</section>
+
+<section class="step" id="p4">
+  <div class="step-tag"><span class="n">4</span><h2>O que você deve ver</h2></div>
+  <div class="card">
+    <p>No final da instalação, o Claude te diz o que ficou pronto. O sinal de que deu tudo certo:</p>
+    <div class="see">Uma pasta <b>Audrey Cut</b> apareceu na sua Área de Trabalho, com <b>1-videos-brutos</b> e <b>2-prontos</b> dentro. E o Claude confirma que o servidor do CapCut está <b>conectado</b>.</div>
+    <div class="warnbox">Se ele avisar que <b>falta alguma coisa</b> (o CapCut, por exemplo), resolve o que ele pediu e escreve: <b>roda a verificação de novo</b>.</div>
+  </div>
+</section>
+
+<section class="step" id="p5">
+  <div class="step-tag"><span class="n">5</span><h2>Editar um vídeo</h2></div>
+  <div class="card">
+    <p>Arrasta o vídeo bruto (o .mp4 que você gravou) para a pasta <b>Audrey Cut &rsaquo; 1-videos-brutos</b> na Área de Trabalho. Depois, no Claude Code, escreve:</p>
+    <div class="cmd">
+      <pre><span class="accent">/editar</span></pre>
+      <button class="copy" type="button">Copiar</button>
+    </div>
+    <p style="margin-top:12px">E espera. A primeira parte é a transcrição e demora uns minutos (na primeira vez de todas demora mais, porque ele baixa o modelo de voz). Ele vai te contando o que decidiu: o gancho que escolheu, o que cortou e por quê.</p>
+  </div>
+</section>
+
+<section class="step" id="p6">
+  <div class="step-tag"><span class="n">6</span><h2>Abrir no CapCut</h2></div>
+  <div class="card">
+    <p>Quando ele terminar, abre o CapCut (se já estava aberto, fecha e abre de novo). O projeto está na lista, com um nome técnico começado em <code>dfd_</code>.</p>
+    <p>Clica nele: a timeline vem montada, com os cortes, as legendas e os zooms. Revisa, ajusta o que quiser, e exporta como qualquer projeto.</p>
+    <div class="see">Pra renomear o projeto, <b>botão direito nele dentro do CapCut</b>.</div>
+  </div>
+</section>
+
+<section class="step" id="p7">
+  <div class="step-tag"><span class="n">7</span><h2>Cuidados que economizam uma noite</h2></div>
+  <div class="care">
+    <article>
+      <h3>Grava na vertical</h3>
+      <p>O sistema entrega 9:16 (1080&times;1920). Se o bruto for horizontal, ele corta as laterais e avisa, mas o enquadramento pode comer a sua cabeça. Vertical resolve.</p>
+    </article>
+    <article>
+      <h3>Um vídeo de cada vez</h3>
+      <p>Se houver mais de um vídeo na pasta, ele pergunta qual é. Pra ir mais rápido, deixa só o da vez em <code>1-videos-brutos</code>.</p>
+    </article>
+    <article>
+      <h3>"Mídia faltando" no CapCut</h3>
+      <p>Fecha o CapCut e abre de novo. Se continuar, escreve no Claude Code: <code>a mídia sumiu no CapCut, refaz a entrega</code>.</p>
+    </article>
+    <article>
+      <h3>O /editar falhou no meio</h3>
+      <p>Escreve <code>/editar</code> de novo: ele retoma do ponto em que parou, não começa do zero. Se falhar de novo, manda o print pro Kaiky.</p>
+    </article>
+    <article>
+      <h3>Atualização do CapCut</h3>
+      <p>De vez em quando o CapCut muda o formato do projeto e a entrega automática pode quebrar até sair conserto. Mesmo nesse caso o corte pronto fica em <code>2-prontos</code>, com uma prévia em vídeo pra você ver o ritmo.</p>
+    </article>
+  </div>
+</section>
+
+<section class="step" id="p8">
+  <div class="step-tag"><span class="n">8</span><h2>O que ele NÃO faz</h2></div>
+  <div class="card">
+    <p>Ele não sente por você. Aprovar o corte, achar que o gancho ficou estranho, querer outra take: <b>isso segue sendo seu</b>. Ele tira o braçal (cortar pausa, digitar legenda, sincronizar texto, arrastar clipe) pra sobrar tempo pro que só você faz: gravar bem e decidir o que vai ao ar.</p>
+    <p>E ele nunca posta nada sozinho. O último clique é sempre seu.</p>
+  </div>
+</section>
+
+<footer>
+  <p><b>Audrey Cut</b> &middot; feito para @audreydoanne &middot; se algo travar, print + mensagem pro Kaiky resolve.</p>
+</footer>
+
+</div>
+
+<script>
+  // Botoes copiar: pega o texto do <pre> irmao.
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var texto = btn.parentElement.querySelector("pre").innerText.trim();
+      function feito() {
+        btn.classList.add("done");
+        btn.textContent = "Copiado!";
+        setTimeout(function () {
+          btn.classList.remove("done");
+          btn.textContent = "Copiar";
+        }, 1800);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(feito, function () { fallback(); });
+      } else { fallback(); }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = texto;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); feito(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+
+  // Stepper acompanha o scroll.
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.steps a"));
+  var secoes = Array.prototype.slice.call(document.querySelectorAll("section.step"));
+  var vis = {};
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { vis[e.target.id] = e.intersectionRatio; });
+    var melhor = secoes.reduce(function (a, s) {
+      return (vis[s.id] || 0) > (vis[a.id] || 0) ? s : a;
+    }, secoes[0]);
+    links.forEach(function (l) {
+      l.classList.toggle("on", l.getAttribute("href") === "#" + melhor.id);
+    });
+  }, { threshold: [0, .25, .5, .75, 1] });
+  secoes.forEach(function (s) { obs.observe(s); });
+</script>
