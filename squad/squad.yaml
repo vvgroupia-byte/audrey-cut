@@ -1,0 +1,54 @@
+nome: Audrey Cut
+versao: 1.0
+dono: "@audreydoanne"
+descricao: >
+  Squad de edicao de video vertical. Recebe o material bruto, decide o corte e
+  entrega um projeto montado no CapCut. Toda a decisao de ritmo, legenda e
+  tipografia vem de medicao das referencias, nao de achismo.
+
+principio: >
+  O que e deterministico e feito por codigo. O squad so decide o que exige
+  julgamento: qual e o hook, que ordem contar, o que sobra, onde entra enfase.
+
+marca:
+  perfil: "@audreydoanne"
+  regra_absoluta: >
+    O conteudo e sempre da marca da Audrey. Nunca mencionar VV Group,
+    VV Traffic Data ou qualquer marca de agencia dentro do video.
+
+agentes:
+  - id: viral-chief
+    papel: Orquestra o fluxo, monta o EDL final, valida contra o estilo medido
+    ficheiro: agents/viral-chief.md
+  - id: hanah-franklin
+    papel: Hook dos primeiros 3 segundos e arquitetura do roteiro
+    ficheiro: agents/hanah-franklin.md
+  - id: finch-editor
+    papel: Ritmo de corte, jump cuts, B-roll, sound design
+    ficheiro: agents/finch-editor.md
+  - id: giu-beckers
+    papel: Legendas, tipografia de enfase, timing do texto na tela
+    ficheiro: agents/giu-beckers.md
+  - id: retention-qa
+    papel: Curva de retencao. Veta antes de montar
+    ficheiro: agents/retention-qa.md
+
+sequencia_padrao:
+  - hanah-franklin      # escolhe o hook e a ordem, antes de tudo
+  - finch-editor        # define o ritmo e onde respira
+  - giu-beckers         # escreve o texto na tela
+  - retention-qa        # veta ou aprova
+  - viral-chief         # monta o EDL e manda para o CapCut
+
+dados:
+  estilo_medido: ESTILO-MEDIDO.md
+  checklists:
+    - checklists/retencao.md
+    - checklists/output-quality.md
+
+regras_inegociaveis:
+  - A marca e sempre a da Audrey.
+  - Nunca usar travessao em legenda, copy ou descricao.
+  - O hook sai da transcricao real do material, nunca e inventado do nada.
+  - Nenhum draft e montado sem o retention-qa aprovar.
+  - Nenhum numero de estilo e estimado: sai do ESTILO-MEDIDO.md ou nao entra.

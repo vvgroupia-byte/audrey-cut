@@ -1,0 +1,39 @@
+name: testes
+
+# Corre a suite do motor a cada push. O que se quer garantir e simples: que a
+# aritmetica de tempos e os nomes dos parametros do CapCut nao partem sem ninguem
+# dar por isso.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  motor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        # Os testes do motor nao tocam em video real, por isso nao precisam do
+        # faster-whisper nem do ffmpeg. Manter esta instalacao minima faz o CI
+        # correr em segundos em vez de minutos.
+        run: python -m pip install --quiet av
+
+      - name: Correr os testes
+        run: python tests/test_motor.py
+
+      - name: Verificar que nao ha traco longo no repositorio
+        # Regra de copy do projeto. Falha o build se alguem escrever um em dash.
+        run: |
+          if grep -rlP "\x{2014}|\x{2013}" --include="*.md" --include="*.py" --include="*.yaml" . ; then
+            echo "Encontrado traco longo nos ficheiros acima. Usa virgula, ponto ou parenteses."
+            exit 1
+          fi
+          echo "Nenhum traco longo encontrado."

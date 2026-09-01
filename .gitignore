@@ -1,0 +1,24 @@
+# Ambiente e dependencias
+.venv/
+__pycache__/
+*.pyc
+
+# Gerado pelo instalador, e especifico de cada maquina
+config.json
+
+# Trabalho de cada edicao. Fica no computador dela, nunca no repositorio.
+work/
+out/
+clipes/
+*.mp4
+*.mov
+*.wav
+*.mp3
+
+# O EDL e o plano sao gerados por edicao
+EDL.json
+plano-capcut.json
+manifesto.json
+
+# macOS
+.DS_Store
