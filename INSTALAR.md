@@ -14,9 +14,6 @@ O resto e com ele. Quando acabar, ele diz o que fazer a seguir.
 
 Se alguma coisa correr mal, manda print do erro ao Kaiky.
 
-> Nota: o repositorio e privado. Se der erro de acesso, e porque a tua conta do
-> GitHub ainda nao foi convidada. Pede ao Kaiky.
-
 ---
 
 ## Daqui para baixo e instrucao para o Claude Code
